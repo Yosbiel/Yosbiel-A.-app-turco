@@ -17,7 +17,7 @@ class AgendaScreen extends StatefulWidget {
 
 class _AgendaScreenState extends State<AgendaScreen> {
   final AgendaViewModel _viewModel = AgendaViewModel();
-  final TurnoViewModel _turnoVM = TurnoViewModel(); // Instancia única
+  final TurnoViewModel _turnoVM = TurnoViewModel();
 
   @override
   void initState() {
@@ -38,7 +38,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    // Escuchamos ambos ViewModels
     return ListenableBuilder(
       listenable: Listenable.merge([_viewModel, _turnoVM]),
       builder: (context, child) {
@@ -146,7 +145,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         itemBuilder: (context, index) {
                           final turno = _viewModel.turnosDelDia[index];
                           return GestureDetector(
-                            onTap: () => context.push('/turno/${turno.id}'),
+                            onTap: () {
+                              // Al volver del detalle, forzamos actualización
+                              context.push('/turno/${turno.id}').then((_) {
+                                setState(() {});
+                              });
+                            },
                             onLongPress: () {
                               if (turno.estado == EstadoTurno.programado) {
                                 _mostrarAcciones(turno);
@@ -170,8 +174,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              // Le pasamos el ViewModel al formulario
-              context.push('/turno/nuevo', extra: _turnoVM);
+              // Al volver del formulario, forzamos actualización
+              context.push('/turno/nuevo').then((_) {
+                setState(() {});
+              });
             },
             child: const Icon(Icons.add),
           ),

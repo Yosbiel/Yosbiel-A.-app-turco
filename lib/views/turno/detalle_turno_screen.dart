@@ -19,6 +19,10 @@ class _DetalleTurnoScreenState extends State<DetalleTurnoScreen> {
   @override
   void initState() {
     super.initState();
+    _cargarTurno();
+  }
+
+  void _cargarTurno() {
     try {
       _turno = MockData.turnos.firstWhere((t) => t.id == widget.turnoId);
     } catch (e) {
@@ -40,9 +44,9 @@ class _DetalleTurnoScreenState extends State<DetalleTurnoScreen> {
     );
 
     if (confirmar == true) {
-      _viewModel.cambiarEstado(_turno!.id, nuevo);
+      _viewModel.cambiarEstado(_turno!.id, nuevo); // Notifica
       setState(() {
-        _turno = MockData.turnos.firstWhere((t) => t.id == widget.turnoId);
+        _cargarTurno(); // Refresca esta pantalla
       });
     }
   }
@@ -118,10 +122,15 @@ class _DetalleTurnoScreenState extends State<DetalleTurnoScreen> {
           ],
           const SizedBox(height: 20),
           
-          // Botones de acción
           if (_turno!.estado == EstadoTurno.programado) ...[
             ElevatedButton.icon(
-              onPressed: () => context.push('/turno/${_turno!.id}/editar'),
+              onPressed: () {
+                context.push('/turno/${_turno!.id}/editar').then((_) {
+                  setState(() {
+                    _cargarTurno();
+                  });
+                });
+              },
               icon: const Icon(Icons.edit),
               label: const Text('Editar Turno'),
             ),
