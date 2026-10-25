@@ -39,7 +39,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     
     return ListenableBuilder(
-      listenable: Listenable.merge([_viewModel, _turnoVM]),
+      listenable: Listenable.merge([_viewModel, _turnoVM]), // Escucha ambos
       builder: (context, child) {
         return Scaffold(
           backgroundColor: colorScheme.surface,
@@ -90,7 +90,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 ),
               ),
               
-              // Chips de Estilista
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -115,7 +114,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Filtro de Estado (Añadido)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: SegmentedButton<EstadoTurno?>(
@@ -138,7 +136,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Lista de turnos
               Expanded(
                 child: _viewModel.turnosDelDia.isEmpty
                     ? const Center(child: Text('No hay turnos para este día'))
@@ -189,7 +186,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             leading: const Icon(Icons.check, color: Colors.green),
             title: const Text('Completar turno'),
             onTap: () {
-              _turnoVM.cambiarEstado(turno.id, EstadoTurno.completado);
+              _turnoVM.cambiarEstado(turno.id, EstadoTurno.completado); // Notifica
               Navigator.pop(context);
             },
           ),
@@ -197,7 +194,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             leading: const Icon(Icons.cancel, color: Colors.red),
             title: const Text('Cancelar turno'),
             onTap: () {
-              _turnoVM.cambiarEstado(turno.id, EstadoTurno.cancelado);
+              _turnoVM.cambiarEstado(turno.id, EstadoTurno.cancelado); // Notifica
               Navigator.pop(context);
             },
           ),

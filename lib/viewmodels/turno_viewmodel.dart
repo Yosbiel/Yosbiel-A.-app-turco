@@ -55,14 +55,13 @@ class TurnoViewModel extends ChangeNotifier {
   }
 
   void guardarTurno(Turno turno) {
-    // Buscamos si ya existe para editarlo, si no, lo agregamos
     int index = MockData.turnos.indexWhere((t) => t.id == turno.id);
     if (index != -1) {
       MockData.turnos[index] = turno;
     } else {
       MockData.turnos.add(turno);
     }
-    notifyListeners();
+    notifyListeners(); // <-- ESTO ES CLAVE
   }
 
   void cambiarEstado(String idTurno, EstadoTurno nuevoEstado) {
@@ -80,7 +79,7 @@ class TurnoViewModel extends ChangeNotifier {
         fechaCreacion: t.fechaCreacion,
         fechaModificacion: DateTime.now(),
       );
-      notifyListeners();
+      notifyListeners(); // <-- ESTO ES CLAVE
     }
   }
 }

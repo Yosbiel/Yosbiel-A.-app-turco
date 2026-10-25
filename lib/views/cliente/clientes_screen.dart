@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../viewmodels/cliente_viewmodel.dart';
-import '../../models/cliente.dart';
 import 'cliente_form_sheet.dart';
 
 class ClientesScreen extends StatefulWidget {
@@ -51,11 +50,15 @@ class _ClientesScreenState extends State<ClientesScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              builder: (context) => const ClienteFormSheet(),
-            ),
+            onPressed: () async {
+              await showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (context) => const ClienteFormSheet(),
+              );
+              // Forzamos la actualización al cerrar la hoja
+              _viewModel.cambiarBusqueda('');
+            },
             child: const Icon(Icons.add),
           ),
         );
