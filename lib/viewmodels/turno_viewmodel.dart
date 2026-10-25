@@ -61,7 +61,7 @@ class TurnoViewModel extends ChangeNotifier {
     } else {
       MockData.turnos.add(turno);
     }
-    notifyListeners(); // <-- ESTO ES CLAVE
+    notifyListeners();
   }
 
   void cambiarEstado(String idTurno, EstadoTurno nuevoEstado) {
@@ -79,7 +79,7 @@ class TurnoViewModel extends ChangeNotifier {
         fechaCreacion: t.fechaCreacion,
         fechaModificacion: DateTime.now(),
       );
-      notifyListeners(); // <-- ESTO ES CLAVE
+      notifyListeners();
     }
   }
 }

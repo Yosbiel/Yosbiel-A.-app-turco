@@ -39,7 +39,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     
     return ListenableBuilder(
-      listenable: Listenable.merge([_viewModel, _turnoVM]), // Escucha ambos
+      listenable: Listenable.merge([_viewModel, _turnoVM]),
       builder: (context, child) {
         return Scaffold(
           backgroundColor: colorScheme.surface,
@@ -168,7 +168,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => context.push('/turno/nuevo'),
+            onPressed: () async {
+              // Espera a que el formulario se cierre y luego actualiza
+              await context.push('/turno/nuevo');
+              _turnoVM.notifyListeners();
+              _viewModel.notifyListeners();
+            },
             child: const Icon(Icons.add),
           ),
         );
@@ -186,7 +191,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             leading: const Icon(Icons.check, color: Colors.green),
             title: const Text('Completar turno'),
             onTap: () {
-              _turnoVM.cambiarEstado(turno.id, EstadoTurno.completado); // Notifica
+              _turnoVM.cambiarEstado(turno.id, EstadoTurno.completado);
               Navigator.pop(context);
             },
           ),
@@ -194,7 +199,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             leading: const Icon(Icons.cancel, color: Colors.red),
             title: const Text('Cancelar turno'),
             onTap: () {
-              _turnoVM.cambiarEstado(turno.id, EstadoTurno.cancelado); // Notifica
+              _turnoVM.cambiarEstado(turno.id, EstadoTurno.cancelado);
               Navigator.pop(context);
             },
           ),

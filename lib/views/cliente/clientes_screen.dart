@@ -51,12 +51,12 @@ class _ClientesScreenState extends State<ClientesScreen> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
+              // Espera a que la hoja se cierre y luego refresca
               await showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 builder: (context) => const ClienteFormSheet(),
               );
-              // Forzamos la actualización al cerrar la hoja
               _viewModel.cambiarBusqueda('');
             },
             child: const Icon(Icons.add),

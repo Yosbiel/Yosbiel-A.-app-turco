@@ -102,7 +102,7 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                     isScrollControlled: true,
                     builder: (context) => const ClienteFormSheet(),
                   ).then((_) {
-                    // Si se creó un cliente, refrescamos la lista
+                    // Refrescar la lista de clientes si se creó uno nuevo
                     setState(() {});
                   });
                 },
@@ -197,8 +197,8 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                       fechaCreacion: DateTime.now(),
                       fechaModificacion: DateTime.now(),
                     );
-                    _viewModel.guardarTurno(nuevo); // Guarda y notifica
-                    context.pop(); // Vuelve a la agenda
+                    _viewModel.guardarTurno(nuevo);
+                    context.pop(); // Vuelve a la Agenda
                   }
                 },
                 child: const Text('Guardar turno'),
