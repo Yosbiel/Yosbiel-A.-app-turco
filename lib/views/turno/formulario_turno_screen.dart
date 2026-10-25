@@ -211,8 +211,8 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                       fechaCreacion: DateTime.now(),
                       fechaModificacion: DateTime.now(),
                     );
-                    _viewModel.guardarTurno(nuevo); // Usa el ViewModel compartido
-                    context.pop();
+                    _viewModel.guardarTurno(nuevo); // Guarda en el ViewModel compartido
+                    context.pop(); // Vuelve a la Agenda
                   }
                 },
                 child: const Text('Guardar turno'),

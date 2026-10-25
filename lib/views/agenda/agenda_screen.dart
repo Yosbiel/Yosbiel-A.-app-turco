@@ -17,7 +17,7 @@ class AgendaScreen extends StatefulWidget {
 
 class _AgendaScreenState extends State<AgendaScreen> {
   final AgendaViewModel _viewModel = AgendaViewModel();
-  final TurnoViewModel _turnoVM = TurnoViewModel();
+  final TurnoViewModel _turnoVM = TurnoViewModel(); // Instancia única
 
   @override
   void initState() {
@@ -146,10 +146,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           final turno = _viewModel.turnosDelDia[index];
                           return GestureDetector(
                             onTap: () {
-                              // Al volver del detalle, forzamos actualización
-                              context.push('/turno/${turno.id}').then((_) {
-                                setState(() {});
-                              });
+                              context.push('/turno/${turno.id}').then((_) => setState(() {}));
                             },
                             onLongPress: () {
                               if (turno.estado == EstadoTurno.programado) {
@@ -174,10 +171,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              // Al volver del formulario, forzamos actualización
-              context.push('/turno/nuevo').then((_) {
-                setState(() {});
-              });
+              // Le pasamos el _turnoVM al formulario
+              context.push('/turno/nuevo', extra: _turnoVM).then((_) => setState(() {}));
             },
             child: const Icon(Icons.add),
           ),
