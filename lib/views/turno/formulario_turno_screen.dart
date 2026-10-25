@@ -201,7 +201,7 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                 onPressed: () {
                   if (_formKey.currentState!.validate() && _hora != null && _servicios.isNotEmpty) {
                     final nuevo = Turno(
-                      id: widget.turnoAEditar?.id ?? DateTime.now().toString(),
+                      id: widget.turnoAEditar?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
                       cliente: _cliente!,
                       estilista: _estilista!,
                       servicios: _servicios,
@@ -212,15 +212,11 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                       fechaModificacion: DateTime.now(),
                     );
                     
-                    // GUARDADO DIRECTO EN LA LISTA
-                    int index = MockData.turnos.indexWhere((t) => t.id == nuevo.id);
-                    if (index != -1) {
-                      MockData.turnos[index] = nuevo;
-                    } else {
-                      MockData.turnos.add(nuevo);
-                    }
+                    // GUARDADO DIRECTO EN LA LISTA GLOBAL
+                    MockData.turnos.add(nuevo);
                     
-                    context.pop(true); // Vuelve a la Agenda con señal de éxito
+                    // Vuelve a la Agenda avisando que hubo éxito
+                    context.pop(true);
                   }
                 },
                 child: const Text('Guardar turno'),

@@ -171,7 +171,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
-              // Espera a que el formulario se cierre y luego fuerza la recarga
+              // Espera a que el formulario se cierre y luego reconstruye la Agenda
               await context.push('/turno/nuevo');
               setState(() {});
             },
