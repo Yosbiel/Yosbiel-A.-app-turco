@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // <-- Necesario para la navegación
 import '../../viewmodels/servicio_viewmodel.dart';
 import '../../models/servicio.dart';
 
@@ -82,18 +83,25 @@ class _ServiciosScreenState extends State<ServiciosScreen> {
                   itemCount: _viewModel.serviciosFiltrados.length,
                   itemBuilder: (context, index) {
                     final s = _viewModel.serviciosFiltrados[index];
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.content_cut, size: 40),
-                            const SizedBox(height: 8),
-                            Text(s.nombre, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text('${s.duracionMinutos} min'),
-                            Text('\$${s.precio}'),
-                          ],
+                    return InkWell( // <-- Añadido para detectar el toque
+                      onTap: () {
+                        // Navega al formulario pasando el servicio
+                        context.push('/turno/nuevo', extra: s);
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.content_cut, size: 40),
+                              const SizedBox(height: 8),
+                              Text(s.nombre, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text('${s.duracionMinutos} min'),
+                              Text('\$${s.precio}'),
+                            ],
+                          ),
                         ),
                       ),
                     );

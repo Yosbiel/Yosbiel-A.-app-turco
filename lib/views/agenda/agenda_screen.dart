@@ -17,7 +17,7 @@ class AgendaScreen extends StatefulWidget {
 
 class _AgendaScreenState extends State<AgendaScreen> {
   final AgendaViewModel _viewModel = AgendaViewModel();
-  final TurnoViewModel _turnoVM = TurnoViewModel();
+  final TurnoViewModel _turnoVM = TurnoViewModel(); // Instancia única
 
   @override
   void initState() {
@@ -38,6 +38,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
+    // Escuchamos ambos ViewModels
     return ListenableBuilder(
       listenable: Listenable.merge([_viewModel, _turnoVM]),
       builder: (context, child) {
@@ -168,11 +169,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () async {
-              // Espera a que el formulario se cierre y luego actualiza
-              await context.push('/turno/nuevo');
-              _turnoVM.notifyListeners();
-              _viewModel.notifyListeners();
+            onPressed: () {
+              // Le pasamos el ViewModel al formulario
+              context.push('/turno/nuevo', extra: _turnoVM);
             },
             child: const Icon(Icons.add),
           ),

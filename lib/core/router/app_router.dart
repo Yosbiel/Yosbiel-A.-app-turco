@@ -7,11 +7,12 @@ import '../../views/estilista/estilistas_screen.dart';
 import '../../views/turno/detalle_turno_screen.dart';
 import '../../views/turno/formulario_turno_screen.dart';
 import '../../data/mock_data.dart';
+import '../../models/servicio.dart';
+import '../../viewmodels/turno_viewmodel.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 class AppRouter {
-  // Recibimos la función del main
   static GoRouter router(Function(ThemeMode) cambiarTema) {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
@@ -41,7 +42,6 @@ class AppRouter {
                   path: '/agenda',
                   builder: (context, state) {
                     final estilistaId = state.uri.queryParameters['estilista'];
-                    // Le pasamos la función a la Agenda
                     return AgendaScreen(estilistaIdInicial: estilistaId, onCambiarTema: cambiarTema);
                   },
                 ),
@@ -61,7 +61,22 @@ class AppRouter {
         GoRoute(
           path: '/turno/nuevo',
           parentNavigatorKey: _rootNavigatorKey,
-          builder: (context, state) => const FormularioTurnoScreen(),
+          builder: (context, state) {
+            final extra = state.extra;
+            TurnoViewModel? viewModelCompartido;
+            Servicio? servicioInicial;
+
+            if (extra is TurnoViewModel) {
+              viewModelCompartido = extra;
+            } else if (extra is Servicio) {
+              servicioInicial = extra;
+            }
+
+            return FormularioTurnoScreen(
+              viewModelCompartido: viewModelCompartido,
+              servicioInicial: servicioInicial,
+            );
+          },
         ),
         GoRoute(
           path: '/turno/:id',
@@ -76,7 +91,6 @@ class AppRouter {
           parentNavigatorKey: _rootNavigatorKey,
           builder: (context, state) {
             final idTurno = state.pathParameters['id']!;
-            // BUSCAMOS EL TURNO PARA EDITARLO
             final turno = MockData.turnos.firstWhere((t) => t.id == idTurno, orElse: () => MockData.turnos.first);
             return FormularioTurnoScreen(turnoAEditar: turno);
           },

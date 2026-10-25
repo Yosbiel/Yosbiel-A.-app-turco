@@ -10,7 +10,15 @@ import '../cliente/cliente_form_sheet.dart';
 
 class FormularioTurnoScreen extends StatefulWidget {
   final Turno? turnoAEditar;
-  const FormularioTurnoScreen({super.key, this.turnoAEditar});
+  final Servicio? servicioInicial;
+  final TurnoViewModel? viewModelCompartido;
+
+  const FormularioTurnoScreen({
+    super.key, 
+    this.turnoAEditar, 
+    this.servicioInicial,
+    this.viewModelCompartido,
+  });
 
   @override
   State<FormularioTurnoScreen> createState() => _FormularioTurnoScreenState();
@@ -18,7 +26,7 @@ class FormularioTurnoScreen extends StatefulWidget {
 
 class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TurnoViewModel _viewModel = TurnoViewModel();
+  late TurnoViewModel _viewModel;
   
   Cliente? _cliente;
   List<Servicio> _servicios = [];
@@ -32,6 +40,8 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
   @override
   void initState() {
     super.initState();
+    _viewModel = widget.viewModelCompartido ?? TurnoViewModel();
+    
     if (widget.turnoAEditar != null) {
       _cliente = widget.turnoAEditar!.cliente;
       _servicios = List.from(widget.turnoAEditar!.servicios);
@@ -39,12 +49,17 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
       _fecha = widget.turnoAEditar!.fechaHoraInicio;
       _hora = widget.turnoAEditar!.fechaHoraInicio;
       _notasController.text = widget.turnoAEditar!.notas ?? '';
+    } else if (widget.servicioInicial != null) {
+      _servicios.add(widget.servicioInicial!);
     }
   }
 
   @override
   void dispose() {
     _notasController.dispose();
+    if (widget.viewModelCompartido == null) {
+      _viewModel.dispose();
+    }
     super.dispose();
   }
 
@@ -102,7 +117,6 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                     isScrollControlled: true,
                     builder: (context) => const ClienteFormSheet(),
                   ).then((_) {
-                    // Refrescar la lista de clientes si se creó uno nuevo
                     setState(() {});
                   });
                 },
@@ -197,8 +211,8 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                       fechaCreacion: DateTime.now(),
                       fechaModificacion: DateTime.now(),
                     );
-                    _viewModel.guardarTurno(nuevo);
-                    context.pop(); // Vuelve a la Agenda
+                    _viewModel.guardarTurno(nuevo); // Usa el ViewModel compartido
+                    context.pop();
                   }
                 },
                 child: const Text('Guardar turno'),
