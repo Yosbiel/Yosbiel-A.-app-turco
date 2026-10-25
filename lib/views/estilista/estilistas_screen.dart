@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../viewmodels/estilista_viewmodel.dart';
 
-class EstilistasScreen extends StatefulWidget {
-  const EstilistasScreen({super.key});
-  @override
-  State<EstilistasScreen> createState() => _EstilistasScreenState();
-}
+class EstilistasScreen extends StatelessWidget {
+  final EstilistaViewModel estilistaVM;
 
-class _EstilistasScreenState extends State<EstilistasScreen> {
-  final EstilistaViewModel _viewModel = EstilistaViewModel();
+  const EstilistasScreen({super.key, required this.estilistaVM});
 
   @override
   Widget build(BuildContext context) {
@@ -27,16 +23,36 @@ class _EstilistasScreenState extends State<EstilistasScreen> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final e = _viewModel.estilistas[index];
+                final e = estilistaVM.estilistas[index];
                 return ListTile(
-                  leading: CircleAvatar(child: Text(e.nombre[0])),
+                  leading: CircleAvatar(
+                    backgroundImage: AssetImage(e.rutaAvatar), // <-- Aquí carga la foto
+                    onBackgroundImageError: (_, __) {}, // Evita crash si falta la foto
+                  ),
                   title: Text(e.nombre),
-                  subtitle: Text('${_viewModel.turnosHoy(e)} turnos hoy'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${estilistaVM.turnosHoy(e)} turnos hoy'),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 4,
+                        children: e.serviciosQueRealiza
+                            .map((s) => Chip(
+                                  label: Text(s.nombre,
+                                      style: const TextStyle(fontSize: 10)),
+                                  visualDensity: VisualDensity.compact,
+                                ))
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                  isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.go('/agenda?estilista=${e.id}'),
                 );
               },
-              childCount: _viewModel.estilistas.length,
+              childCount: estilistaVM.estilistas.length,
             ),
           ),
         ],

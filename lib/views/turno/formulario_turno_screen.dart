@@ -6,18 +6,25 @@ import '../../models/servicio.dart';
 import '../../models/estilista.dart';
 import '../../data/mock_data.dart';
 import '../../viewmodels/turno_viewmodel.dart';
+import '../../viewmodels/cliente_viewmodel.dart';
 import '../cliente/cliente_form_sheet.dart';
 
 class FormularioTurnoScreen extends StatefulWidget {
+  final TurnoViewModel turnoVM;
+  final ClienteViewModel clienteVM;
   final Turno? turnoAEditar;
   final Servicio? servicioInicial;
-  final TurnoViewModel? viewModelCompartido;
+  final Cliente? clienteInicial;
+  final DateTime? fechaInicial;
 
   const FormularioTurnoScreen({
-    super.key, 
-    this.turnoAEditar, 
+    super.key,
+    required this.turnoVM,
+    required this.clienteVM,
+    this.turnoAEditar,
     this.servicioInicial,
-    this.viewModelCompartido,
+    this.clienteInicial,
+    this.fechaInicial,
   });
 
   @override
@@ -26,40 +33,39 @@ class FormularioTurnoScreen extends StatefulWidget {
 
 class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TurnoViewModel _viewModel;
-  
+  final _notasController = TextEditingController();
+
   Cliente? _cliente;
-  List<Servicio> _servicios = [];
+  final List<Servicio> _servicios = [];
   Estilista? _estilista;
   DateTime _fecha = DateTime.now();
   DateTime? _hora;
   bool _hayCambios = false;
-  
-  final _notasController = TextEditingController();
+  String? _errorHora;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = widget.viewModelCompartido ?? TurnoViewModel();
-    
     if (widget.turnoAEditar != null) {
-      _cliente = widget.turnoAEditar!.cliente;
-      _servicios = List.from(widget.turnoAEditar!.servicios);
-      _estilista = widget.turnoAEditar!.estilista;
-      _fecha = widget.turnoAEditar!.fechaHoraInicio;
-      _hora = widget.turnoAEditar!.fechaHoraInicio;
-      _notasController.text = widget.turnoAEditar!.notas ?? '';
-    } else if (widget.servicioInicial != null) {
-      _servicios.add(widget.servicioInicial!);
+      final t = widget.turnoAEditar!;
+      _cliente = t.cliente;
+      _servicios.addAll(t.servicios);
+      _estilista = t.estilista;
+      _fecha = t.fechaHoraInicio;
+      _hora = t.fechaHoraInicio;
+      _notasController.text = t.notas ?? '';
+    } else {
+      _cliente = widget.clienteInicial;
+      if (widget.servicioInicial != null) {
+        _servicios.add(widget.servicioInicial!);
+      }
+      if (widget.fechaInicial != null) _fecha = widget.fechaInicial!;
     }
   }
 
   @override
   void dispose() {
     _notasController.dispose();
-    if (widget.viewModelCompartido == null) {
-      _viewModel.dispose();
-    }
     super.dispose();
   }
 
@@ -67,10 +73,52 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
     if (!_hayCambios) setState(() => _hayCambios = true);
   }
 
+  Future<void> _guardar() async {
+    final validForm = _formKey.currentState?.validate() ?? false;
+
+    if (_servicios.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes elegir al menos un servicio')),
+      );
+      return;
+    }
+    if (_hora == null) {
+      setState(() => _errorHora = 'Selecciona una hora');
+      return;
+    }
+    if (!validForm) return;
+
+    setState(() => _errorHora = null);
+
+    final esEdicion = widget.turnoAEditar != null;
+    final turnoGuardado = Turno(
+      id: esEdicion
+          ? widget.turnoAEditar!.id
+          : DateTime.now().millisecondsSinceEpoch.toString(),
+      cliente: _cliente!,
+      estilista: _estilista!,
+      servicios: List.from(_servicios),
+      fechaHoraInicio: _hora!,
+      notas: _notasController.text.trim().isEmpty
+          ? null
+          : _notasController.text.trim(),
+      estado: esEdicion
+          ? widget.turnoAEditar!.estado
+          : EstadoTurno.programado,
+      fechaCreacion: esEdicion
+          ? widget.turnoAEditar!.fechaCreacion
+          : DateTime.now(),
+      fechaModificacion: DateTime.now(),
+    );
+
+    widget.turnoVM.guardarTurno(turnoGuardado);
+    if (mounted) context.pop(turnoGuardado);
+  }
+
   @override
   Widget build(BuildContext context) {
     final estilistasDisponibles = MockData.estilistas.where((e) {
-      for (var s in _servicios) {
+      for (final s in _servicios) {
         if (!e.realizaServicio(s)) return false;
       }
       return true;
@@ -82,19 +130,28 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
         if (didPop) return;
         final confirmar = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (ctx) => AlertDialog(
             title: const Text('¿Descartar cambios?'),
             content: const Text('Si sales ahora se perderán.'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Seguir editando')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Descartar', style: TextStyle(color: Colors.red))),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Seguir editando')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Descartar',
+                      style: TextStyle(color: Colors.red))),
             ],
           ),
         );
         if (confirmar == true && mounted) context.pop();
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.turnoAEditar == null ? 'Nuevo turno' : 'Editar turno')),
+        appBar: AppBar(
+          title: Text(widget.turnoAEditar == null
+              ? 'Nuevo turno'
+              : 'Editar turno'),
+        ),
         body: Form(
           key: _formKey,
           child: ListView(
@@ -102,54 +159,78 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
             children: [
               DropdownButtonFormField<Cliente>(
                 value: _cliente,
-                decoration: const InputDecoration(labelText: 'Cliente', border: OutlineInputBorder()),
-                items: MockData.clientes.map((c) => DropdownMenuItem(value: c, child: Text(c.nombre))).toList(),
+                decoration: const InputDecoration(
+                  labelText: 'Cliente',
+                  border: OutlineInputBorder(),
+                ),
+                items: MockData.clientes
+                    .map((c) =>
+                        DropdownMenuItem(value: c, child: Text(c.nombre)))
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _cliente = val);
                   _marcarCambio();
                 },
-                validator: (val) => val == null ? 'Selecciona un cliente' : null,
+                validator: (val) =>
+                    val == null ? 'Selecciona un cliente' : null,
               ),
               TextButton.icon(
-                onPressed: () {
-                  showModalBottomSheet(
+                onPressed: () async {
+                  await showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
-                    builder: (context) => const ClienteFormSheet(),
-                  ).then((_) {
-                    setState(() {});
-                  });
+                    builder: (_) =>
+                        ClienteFormSheet(clienteVM: widget.clienteVM),
+                  );
+                  if (mounted) setState(() {});
                 },
                 icon: const Icon(Icons.person_add),
                 label: const Text('Crear cliente nuevo'),
               ),
               const SizedBox(height: 16),
 
-              const Text('Servicios (elige al menos uno):', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Servicios (al menos uno):',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
-                children: MockData.servicios.map((s) => FilterChip(
-                  label: Text(s.nombre),
-                  selected: _servicios.contains(s),
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) _servicios.add(s);
-                      else _servicios.remove(s);
-                      _hora = null;
-                      _estilista = null;
-                    });
-                    _marcarCambio();
-                  },
-                )).toList(),
+                runSpacing: 4,
+                children: MockData.servicios.map((s) {
+                  final selected = _servicios.any((x) => x.id == s.id);
+                  return FilterChip(
+                    label: Text(s.nombre),
+                    selected: selected,
+                    onSelected: (sel) {
+                      setState(() {
+                        if (sel) {
+                          _servicios.add(s);
+                        } else {
+                          _servicios.removeWhere((x) => x.id == s.id);
+                        }
+                        _hora = null;
+                        if (_estilista != null &&
+                            !_servicios.every(
+                                (x) => _estilista!.realizaServicio(x))) {
+                          _estilista = null;
+                        }
+                      });
+                      _marcarCambio();
+                    },
+                  );
+                }).toList(),
               ),
-              if (_servicios.isEmpty && _formKey.currentState?.validate() == false)
-                const Text('Debes elegir al menos un servicio', style: TextStyle(color: Colors.red, fontSize: 12)),
               const SizedBox(height: 16),
 
               DropdownButtonFormField<Estilista>(
                 value: _estilista,
-                decoration: const InputDecoration(labelText: 'Estilista', border: OutlineInputBorder()),
-                items: estilistasDisponibles.map((e) => DropdownMenuItem(value: e, child: Text(e.nombre))).toList(),
+                decoration: const InputDecoration(
+                  labelText: 'Estilista',
+                  border: OutlineInputBorder(),
+                ),
+                items: estilistasDisponibles
+                    .map((e) =>
+                        DropdownMenuItem(value: e, child: Text(e.nombre)))
+                    .toList(),
                 onChanged: (val) {
                   setState(() {
                     _estilista = val;
@@ -157,18 +238,27 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                   });
                   _marcarCambio();
                 },
-                validator: (val) => val == null ? 'Selecciona un estilista' : null,
+                validator: (val) =>
+                    val == null ? 'Selecciona un estilista' : null,
               ),
               const SizedBox(height: 16),
 
               ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  side: BorderSide(
+                      color: Theme.of(context).colorScheme.outline),
+                ),
                 title: const Text('Fecha'),
-                subtitle: Text('${_fecha.day}/${_fecha.month}/${_fecha.year}'),
+                subtitle:
+                    Text('${_fecha.day}/${_fecha.month}/${_fecha.year}'),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: _fecha,
+                    initialDate: _fecha.isBefore(DateTime.now())
+                        ? DateTime.now()
+                        : _fecha,
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 60)),
                   );
@@ -181,46 +271,47 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                   }
                 },
               ),
+              const SizedBox(height: 16),
 
               if (_servicios.isNotEmpty && _estilista != null) ...[
-                const SizedBox(height: 10),
-                const Text('Horas disponibles:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Horas disponibles:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
                 _buildHoras(),
+                if (_errorHora != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      _errorHora!,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(height: 16),
               ],
-              const SizedBox(height: 16),
 
               TextFormField(
                 controller: _notasController,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Notas (opcional)', border: OutlineInputBorder()),
+                maxLength: 500,
+                decoration: const InputDecoration(
+                  labelText: 'Notas (opcional)',
+                  border: OutlineInputBorder(),
+                ),
                 onChanged: (_) => _marcarCambio(),
               ),
               const SizedBox(height: 20),
 
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate() && _hora != null && _servicios.isNotEmpty) {
-                    final nuevo = Turno(
-                      id: widget.turnoAEditar?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-                      cliente: _cliente!,
-                      estilista: _estilista!,
-                      servicios: _servicios,
-                      fechaHoraInicio: _hora!,
-                      notas: _notasController.text,
-                      estado: EstadoTurno.programado,
-                      fechaCreacion: DateTime.now(),
-                      fechaModificacion: DateTime.now(),
-                    );
-                    
-                    // GUARDADO DIRECTO EN LA LISTA GLOBAL
-                    MockData.turnos.add(nuevo);
-                    
-                    // Vuelve a la Agenda avisando que hubo éxito
-                    context.pop(true);
-                  }
-                },
+                onPressed: _guardar,
                 child: const Text('Guardar turno'),
-              )
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => context.pop(),
+                child: const Text('Cancelar'),
+              ),
             ],
           ),
         ),
@@ -229,19 +320,37 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
   }
 
   Widget _buildHoras() {
-    final horas = _viewModel.obtenerHorasDisponibles(_fecha, _estilista!, _cliente, _servicios);
-    if (horas.isEmpty) return const Text('No hay horas disponibles');
+    final horas = widget.turnoVM.obtenerHorasDisponibles(
+      _fecha,
+      _estilista!,
+      _cliente,
+      _servicios,
+      idTurnoExcluir: widget.turnoAEditar?.id,
+    );
+
+    if (horas.isEmpty) {
+      return const Text('No hay horas disponibles para esta combinación.');
+    }
 
     return Wrap(
       spacing: 8,
-      children: horas.map((h) => ChoiceChip(
-        label: Text('${h.hour}:00'),
-        selected: _hora == h,
-        onSelected: (selected) {
-          setState(() => _hora = selected ? h : null);
-          _marcarCambio();
-        },
-      )).toList(),
+      runSpacing: 4,
+      children: horas.map((h) {
+        final seleccionado = _hora == h;
+        return ChoiceChip(
+          label: Text(
+              '${h.hour.toString().padLeft(2, '0')}:'
+              '${h.minute.toString().padLeft(2, '0')}'),
+          selected: seleccionado,
+          onSelected: (sel) {
+            setState(() {
+              _hora = sel ? h : null;
+              _errorHora = null;
+            });
+            _marcarCambio();
+          },
+        );
+      }).toList(),
     );
   }
 }
