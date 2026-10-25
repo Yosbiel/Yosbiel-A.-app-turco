@@ -17,7 +17,7 @@ class AgendaScreen extends StatefulWidget {
 
 class _AgendaScreenState extends State<AgendaScreen> {
   final AgendaViewModel _viewModel = AgendaViewModel();
-  final TurnoViewModel _turnoVM = TurnoViewModel(); // Instancia única
+  final TurnoViewModel _turnoVM = TurnoViewModel();
 
   @override
   void initState() {
@@ -170,9 +170,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              // Le pasamos el _turnoVM al formulario
-              context.push('/turno/nuevo', extra: _turnoVM).then((_) => setState(() {}));
+            onPressed: () async {
+              // Espera a que el formulario se cierre y luego fuerza la recarga
+              await context.push('/turno/nuevo');
+              setState(() {});
             },
             child: const Icon(Icons.add),
           ),

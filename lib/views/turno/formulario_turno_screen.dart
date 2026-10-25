@@ -211,8 +211,16 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                       fechaCreacion: DateTime.now(),
                       fechaModificacion: DateTime.now(),
                     );
-                    _viewModel.guardarTurno(nuevo); // Guarda en el ViewModel compartido
-                    context.pop(); // Vuelve a la Agenda
+                    
+                    // GUARDADO DIRECTO EN LA LISTA
+                    int index = MockData.turnos.indexWhere((t) => t.id == nuevo.id);
+                    if (index != -1) {
+                      MockData.turnos[index] = nuevo;
+                    } else {
+                      MockData.turnos.add(nuevo);
+                    }
+                    
+                    context.pop(true); // Vuelve a la Agenda con señal de éxito
                   }
                 },
                 child: const Text('Guardar turno'),
