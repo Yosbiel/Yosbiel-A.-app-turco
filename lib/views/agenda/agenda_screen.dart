@@ -119,6 +119,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           body: Column(
             children: [
+              // Resumen del día
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -140,55 +141,115 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 ),
               ),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: () {
-                        widget.agendaVM.cambiarFecha(
-                            widget.agendaVM.fechaSeleccionada
-                                .subtract(const Duration(days: 1)));
-                      },
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: TextButton.icon(
-                          icon: const Icon(Icons.calendar_today),
-                          label: Text(
-                            '${widget.agendaVM.fechaSeleccionada.day}/'
-                            '${widget.agendaVM.fechaSeleccionada.month}/'
-                            '${widget.agendaVM.fechaSeleccionada.year}',
+              // Tira de días de la semana (ListView.builder obligatorio)
+              SizedBox(
+                height: 70,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  itemCount: 7, // Lunes a Domingo
+                  itemBuilder: (context, index) {
+                    // Calculamos el lunes de la semana de la fecha seleccionada
+                    final lunesDeSemana = widget.agendaVM.fechaSeleccionada
+                        .subtract(Duration(
+                            days: widget.agendaVM.fechaSeleccionada.weekday -
+                                1));
+                    final dia = lunesDeSemana.add(Duration(days: index));
+                    final esSeleccionado = dia.year ==
+                            widget.agendaVM.fechaSeleccionada.year &&
+                        dia.month == widget.agendaVM.fechaSeleccionada.month &&
+                        dia.day == widget.agendaVM.fechaSeleccionada.day;
+                    final esDomingo = dia.weekday == DateTime.sunday;
+
+                    return GestureDetector(
+                      onTap: () => widget.agendaVM.cambiarFecha(dia),
+                      child: Container(
+                        width: 50,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: esSeleccionado
+                              ? colorScheme.primaryContainer
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: esSeleccionado
+                                ? colorScheme.primary
+                                : colorScheme.outlineVariant,
                           ),
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: widget.agendaVM.fechaSeleccionada,
-                              firstDate: DateTime.now()
-                                  .subtract(const Duration(days: 365)),
-                              lastDate: DateTime.now()
-                                  .add(const Duration(days: 365)),
-                            );
-                            if (picked != null) {
-                              widget.agendaVM.cambiarFecha(picked);
-                            }
-                          },
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _nombreDia(dia.weekday),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: esDomingo
+                                    ? colorScheme.error
+                                    : colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              '${dia.day}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: esSeleccionado
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: () {
-                        widget.agendaVM.cambiarFecha(
-                            widget.agendaVM.fechaSeleccionada
-                                .add(const Duration(days: 1)));
-                      },
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
 
+              // Botones de navegación por semana
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left),
+                    onPressed: () => widget.agendaVM.cambiarFecha(
+                        widget.agendaVM.fechaSeleccionada
+                            .subtract(const Duration(days: 7))),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.calendar_today, size: 16),
+                    label: Text(
+                      '${widget.agendaVM.fechaSeleccionada.day}/'
+                      '${widget.agendaVM.fechaSeleccionada.month}/'
+                      '${widget.agendaVM.fechaSeleccionada.year}',
+                    ),
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: widget.agendaVM.fechaSeleccionada,
+                        firstDate: DateTime.now()
+                            .subtract(const Duration(days: 365)),
+                        lastDate: DateTime.now()
+                            .add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        widget.agendaVM.cambiarFecha(picked);
+                      }
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right),
+                    onPressed: () => widget.agendaVM.cambiarFecha(
+                        widget.agendaVM.fechaSeleccionada
+                            .add(const Duration(days: 7))),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Filtro por estilista
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -216,6 +277,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
               const SizedBox(height: 8),
 
+              // Filtro por estado
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: SegmentedButton<EstadoTurno?>(
@@ -233,8 +295,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   ],
                   selected: {widget.agendaVM.filtroEstado},
                   onSelectionChanged: (Set<EstadoTurno?> newSelection) {
-                    widget.agendaVM
-                        .cambiarFiltroEstado(newSelection.first);
+                    widget.agendaVM.cambiarFiltroEstado(newSelection.first);
                   },
                   style: ButtonStyle(
                     textStyle: WidgetStateProperty.all(
@@ -245,6 +306,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
               const SizedBox(height: 8),
 
+              // Lista de turnos
               Expanded(
                 child: turnos.isEmpty
                     ? const Center(
@@ -330,6 +392,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
         );
       },
     );
+  }
+
+  String _nombreDia(int dia) {
+    const dias = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    return dias[dia - 1];
   }
 
   void _mostrarAcciones(BuildContext context, Turno turno) {

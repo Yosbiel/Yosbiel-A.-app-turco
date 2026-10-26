@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../viewmodels/estilista_viewmodel.dart';
+import '../../models/servicio.dart';
 
 class EstilistasScreen extends StatelessWidget {
   final EstilistaViewModel estilistaVM;
@@ -26,7 +27,7 @@ class EstilistasScreen extends StatelessWidget {
                 final e = estilistaVM.estilistas[index];
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundImage: AssetImage(e.rutaAvatar), // <-- Aquí carga la foto
+                    backgroundImage: AssetImage(e.rutaAvatar), // Carga la foto
                     onBackgroundImageError: (_, __) {}, // Evita crash si falta la foto
                   ),
                   title: Text(e.nombre),
@@ -35,16 +36,26 @@ class EstilistasScreen extends StatelessWidget {
                     children: [
                       Text('${estilistaVM.turnosHoy(e)} turnos hoy'),
                       const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 4,
-                        children: e.serviciosQueRealiza
-                            .map((s) => Chip(
-                                  label: Text(s.nombre,
-                                      style: const TextStyle(fontSize: 10)),
-                                  visualDensity: VisualDensity.compact,
-                                ))
-                            .toList(),
-                      ),
+                      // Agrupación de servicios por categoría
+                      ...CategoriaServicio.values.map((cat) {
+                        final serviciosCat = e.serviciosQueRealiza
+                            .where((s) => s.categoria == cat)
+                            .toList();
+                        if (serviciosCat.isEmpty) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Wrap(
+                            spacing: 4,
+                            children: serviciosCat
+                                .map((s) => Chip(
+                                      label: Text(s.nombre,
+                                          style: const TextStyle(fontSize: 10)),
+                                      visualDensity: VisualDensity.compact,
+                                    ))
+                                .toList(),
+                          ),
+                        );
+                      }).toList(),
                     ],
                   ),
                   isThreeLine: true,

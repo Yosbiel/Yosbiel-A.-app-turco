@@ -203,7 +203,8 @@ class _ClientesScreenState extends State<ClientesScreen> {
                       ],
                     ),
                   );
-                  if (ok == true) {
+                  // AÑADIDO: verificar que el widget siga montado antes de usar el VM
+                  if (ok == true && mounted) {
                     widget.clienteVM.eliminarCliente(c.id);
                   }
                 },

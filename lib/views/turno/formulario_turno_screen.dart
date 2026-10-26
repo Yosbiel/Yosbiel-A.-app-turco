@@ -42,6 +42,7 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
   DateTime? _hora;
   bool _hayCambios = false;
   String? _errorHora;
+  PublicoObjetivo? _filtroPublico; // Filtro de público
 
   @override
   void initState() {
@@ -54,14 +55,19 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
       _fecha = t.fechaHoraInicio;
       _hora = t.fechaHoraInicio;
       _notasController.text = t.notas ?? '';
+      _filtroPublico = _generoAPublico(t.cliente.genero);
     } else {
       _cliente = widget.clienteInicial;
+      if (_cliente != null) _filtroPublico = _generoAPublico(_cliente!.genero);
       if (widget.servicioInicial != null) {
         _servicios.add(widget.servicioInicial!);
       }
       if (widget.fechaInicial != null) _fecha = widget.fechaInicial!;
     }
   }
+
+  PublicoObjetivo _generoAPublico(Genero g) =>
+      g == Genero.mujer ? PublicoObjetivo.mujeres : PublicoObjetivo.hombres;
 
   @override
   void dispose() {
@@ -124,6 +130,13 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
       return true;
     }).toList();
 
+    // Servicios filtrados por público
+    final serviciosFiltrados = MockData.servicios.where((s) {
+      if (_filtroPublico == null) return true;
+      return s.publico == _filtroPublico ||
+          s.publico == PublicoObjetivo.unisex;
+    }).toList();
+
     return PopScope(
       canPop: !_hayCambios,
       onPopInvokedWithResult: (didPop, result) async {
@@ -168,7 +181,13 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                         DropdownMenuItem(value: c, child: Text(c.nombre)))
                     .toList(),
                 onChanged: (val) {
-                  setState(() => _cliente = val);
+                  setState(() {
+                    _cliente = val;
+                    // Ajusta el filtro de público al género del cliente
+                    if (val != null) {
+                      _filtroPublico = _generoAPublico(val.genero);
+                    }
+                  });
                   _marcarCambio();
                 },
                 validator: (val) =>
@@ -192,10 +211,32 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
               const Text('Servicios (al menos uno):',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
+
+              // Filtro por público
+              SegmentedButton<PublicoObjetivo?>(
+                segments: const [
+                  ButtonSegment(value: null, label: Text('Todos')),
+                  ButtonSegment(value: PublicoObjetivo.mujeres, label: Text('Mujeres')),
+                  ButtonSegment(value: PublicoObjetivo.hombres, label: Text('Hombres')),
+                ],
+                selected: {_filtroPublico},
+                onSelectionChanged: (s) {
+                  setState(() {
+                    _filtroPublico = s.first;
+                    _hora = null;
+                  });
+                  _marcarCambio();
+                },
+                style: ButtonStyle(
+                  textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 12)),
+                ),
+              ),
+              const SizedBox(height: 8),
+
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
-                children: MockData.servicios.map((s) {
+                children: serviciosFiltrados.map((s) {
                   final selected = _servicios.any((x) => x.id == s.id);
                   return FilterChip(
                     label: Text(s.nombre),
@@ -208,10 +249,16 @@ class _FormularioTurnoScreenState extends State<FormularioTurnoScreen> {
                           _servicios.removeWhere((x) => x.id == s.id);
                         }
                         _hora = null;
+                        // Si el estilista ya no hace todos los servicios, limpiar y avisar
                         if (_estilista != null &&
                             !_servicios.every(
                                 (x) => _estilista!.realizaServicio(x))) {
                           _estilista = null;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'El estilista seleccionado no realiza todos los servicios. Selecciona otro.')),
+                          );
                         }
                       });
                       _marcarCambio();

@@ -80,7 +80,7 @@ class ServiciosScreen extends StatelessWidget {
                       crossAxisCount: cols,
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
-                      childAspectRatio: 0.8,
+                      childAspectRatio: 0.75, // Ajustado para que quepa el público
                     ),
                     itemCount: servicios.length,
                     itemBuilder: (context, index) {
@@ -95,19 +95,21 @@ class ServiciosScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Expanded(
-                                  child: Image.asset( // <-- Aquí carga la foto
+                                  child: Image.asset(
                                     'assets/servicios/${s.categoria.name}.png',
                                     fit: BoxFit.contain,
                                     errorBuilder: (context, error, stackTrace) =>
                                         const Icon(Icons.image_not_supported, size: 40),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 Text(s.nombre,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                                Text('${s.duracionMinutos} min'),
-                                Text('\$${s.precio}'),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text('${s.duracionMinutos} min', style: const TextStyle(fontSize: 11)),
+                                Text('\$${s.precio}', style: const TextStyle(fontSize: 11)),
+                                Text(s.publico.name, // <-- AÑADIDO
+                                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.primary)),
                               ],
                             ),
                           ),
