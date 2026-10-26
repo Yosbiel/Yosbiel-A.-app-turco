@@ -21,7 +21,7 @@
 <h2>Requisitos e Instalación</h2>
 
 <h3>Versión de Flutter</h3>
-<p>El proyecto fue desarrollado utilizando <b>Flutter</b> y compilado exitosamente en la nube a través de <b>Codemagic</b> (CI/CD).</p>
+<p>El proyecto fue desarrollado y compilado utilizando <b>Flutter 3.47.7</b>.</p>
 
 <h3>Application ID</h3>
 <p>El identificador de la aplicación es: <br>
